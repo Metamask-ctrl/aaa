@@ -138,15 +138,15 @@ jobs:
             
             echo "3. 清理宿主机上原有的空挂载目录，并直接解压物理备份到挂载点..."
             # 注意：这里必须是你在 docker-compose 里挂载的宿主机真实路径 ./alist-data
-            rm -rf ./alist-data
-            mkdir -p ./alist-data
+            sudo rm -rf ./alist-data
+            sudo mkdir -p ./alist-data
             ls -la ./alist-data
             
             # 安装解压工具（以防 Runner 默认没带）
             #sudo apt-get update && sudo apt-get install -y unzip
             
             # 解压到宿主机的真实挂载路径中
-            unzip -P "$DATA_PASS" ./data.zip -d ./alist-data
+            sudo unzip -P "$DATA_PASS" ./data.zip -d ./alist-data
             
             echo "4. 检查解压后的文件结构，确保数据库文件落盘..."
             ls -la ./alist-data
