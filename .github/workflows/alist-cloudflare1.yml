@@ -120,6 +120,7 @@ jobs:
 
       - name: Configure 1Panel admin
         run: |
+          sudo 1pctl user-info
           sudo 1pctl user create --username mohic --password monchan
           
           
