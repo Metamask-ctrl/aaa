@@ -43,8 +43,10 @@ jobs:
               ports:
                 - "2283:2283"
               depends_on:
-                - immich-postgres
-                - immich-redis
+                immich-postgres:
+                  condition: service_healthy
+                immich-redis:
+                  condition: service_started
               restart: always
 
             immich-machine-learning:
@@ -58,7 +60,6 @@ jobs:
 
             immich-postgres:
               container_name: immich_postgres
-              # 使用 Immich 官方指定的专属 pgvecto-rs 镜像（支持人脸识别/机器学习向量）
               image: tensorchord/pgvecto-rs:pg14-v0.2.0
               environment:
                 POSTGRES_PASSWORD: DB_PASSWORD_TEMPORARY
@@ -66,11 +67,15 @@ jobs:
                 POSTGRES_DB: immich
               volumes:
                 - ./immich-postgres:/var/lib/postgresql/data
+              healthcheck:
+                test: ["CMD-SHELL", "pg_isready -d immich -U postgres"]
+                interval: 5s
+                timeout: 5s
+                retries: 5
               restart: always
 
             immich-redis:
               container_name: immich_redis
-              # 使用官方纯净版 Redis
               image: redis:6.2-alpine
               restart: always
 
@@ -79,7 +84,6 @@ jobs:
               image: cloudflare/cloudflared:latest
               container_name: cloudflared-tunnel
               restart: always
-              # 使用 host 网络模式，方便一个隧道同时穿透本地 5244 (AList) 和 2283 (Immich)
               command: tunnel --no-autoupdate run --token ${CF_TUNNEL_TOKEN}
               network_mode: "host"
               depends_on:
@@ -91,46 +95,62 @@ jobs:
       - name: Create Immich Env File
         run: |
           cat << 'EOF' > .env
-          # Immich 基础配置
           DB_PASSWORD=DB_PASSWORD_TEMPORARY
           DB_USERNAME=postgres
           DB_DATABASE_NAME=immich
           DB_HOSTNAME=immich-postgres
-          
-          # 绑定机器学习组件的位置
           IMMICH_MACHINE_LEARNING_URL=http://immich-machine-learning:3003
           EOF
 
-      # 3. 启动所有服务
+      # 3. 启动所有 Docker 容器
       - name: Start Services and Cloudflare Tunnel
         env:
           CF_TUNNEL_TOKEN: ${{ secrets.CF_TUNNEL_TOKEN }}
-          PASS: ${{ secrets.PASS }}
         run: |
-          # 后台启动所有容器
           docker compose up -d
+          echo "正在等待所有服务完成基础初始化..."
+          sleep 15
+
+      # 4. 下载加密的 JSON 备份文件并导入到 AList（核心步骤）
+      - name: Fetch and Restore Encrypted JSON Config
+        env:
+          CONFIG_URL: ${{ secrets.ALIST_CONFIG_URL }}
+          BACKUP_PASS: ${{ secrets.ALIST_BACKUP_PASSWORD }}
+          LOGIN_PASS: ${{ secrets.PASS }}
+        run: |
+          echo "正在从远程 URL 下载加密的 JSON 备份文件..."
+          # 下载并存放到 AList 挂载目录下，方便容器读取
+          curl -L "$CONFIG_URL" -o ./alist-data/backup.json
           
-          # 给多容器环境（尤其是数据库初始化）留出充足的启动时间
-          echo "正在等待所有服务完成初始化..."
-          sleep 20
-          
+          if [ -s ./alist-data/backup.json ]; then
+            echo "备份文件下载成功，正在执行解密导入..."
+            
+            # 使用 AList 自带的 admin 导入指令 
+            # 语法：alist admin import <文件路径> <解密密码>
+            # -v 参数用于指定覆盖冲突模式（1 代表覆盖现有存储）
+            docker exec alist ./alist admin import /opt/alist/data/backup.json "$BACKUP_PASS" -v 1
+            
+            echo "配置恢复完成！"
+            
+            # 临时清理掉容器外的物理 json 文件防止泄露
+            rm -f ./alist-data/backup.json
+          else
+            echo "错误：加密备份文件下载失败或为空，无法执行恢复！"
+          fi
+
           echo "========================================="
-          echo "AList 初始登录管理员密码设置成功："
-          docker exec alist ./alist admin set ${PASS}
+          echo "正在强制重置/同步最终登录管理员密码..."
+          docker exec alist ./alist admin set "$LOGIN_PASS"
           echo "========================================="
           
-          # 检查并打印所有容器运行状态
+          # 检查容器状态
           docker compose ps
 
-      # 4. 保持工作流运行（防止虚拟机立即销毁）
+      # 5. 保持工作流运行
       - name: Keep Workflow Alive
         run: |
           echo "=================================================="
-          echo "AList 和 Immich 服务已全部在 GitHub Actions 上就绪！"
-          echo "1. AList 外部访问地址: 你在 Cloudflare 绑定的 AList 域名"
-          echo "2. Immich 外部访问地址: 你在 Cloudflare 绑定的 Immich 域名"
+          echo "AList 已成功解密并恢复 JSON 配置！"
+          echo "AList 和 Immich 服务已全部就绪。"
           echo "=================================================="
-          echo "工作流保持运行中，最大运行时间为 6 小时。"
-          echo "如需停止，请直接在 GitHub Actions 页面点击 'Cancel run'。"
-          
           while true; do sleep 60; done
