@@ -239,7 +239,7 @@ jobs:
           sleep 10
           
           echo "6. 验证挂载点状态，查看是否成功读取到 AList 的网盘结构："
-          ls -la ./alist-mount
+          #ls -la ./alist-mount
 
       # 5. 保持工作流运行
       - name: Keep Workflow Alive
