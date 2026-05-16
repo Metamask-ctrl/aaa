@@ -106,52 +106,23 @@ jobs:
           fi
           rm -f ./data.zip
 
-      # 5. 在 AList 健康运行状态下执行 rclone 挂载
-      - name: Mount AList WebDAV via Rclone
-        env:
-          LOGIN_PASS: ${{ secrets.PASS }}
-        run: |
-          echo "1. 等待 AList 容器彻底苏醒并能正常提供 WebDAV 服务..."
-          # 死循环检测，只要 AList 好了就立刻放行，不需要傻傻死等
-          for i in {1..30}; do
-            STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:5244/ || true)
-            echo "当前 AList 后台状态码: $STATUS"
-            if [ "$STATUS" = "200" ] || [ "$STATUS" = "302" ]; then
-              echo "【成功】AList 已经完全就绪！"
-              break
-            fi
-            sleep 1.5
-          done
-          
-          echo "2. 创建并注入标准的 rclone 本地配置文件..."
-          mkdir -p ~/.config/rclone/
-          OBSCURED_PASS=$(rclone obscure "$LOGIN_PASS")
-          
-          cat << EOF > ~/.config/rclone/rclone.conf
-          [alist_dav]
-          type = webdav
-          url = http://172.17.0.1:5244/dav
-          vendor = other
-          user = admin
-          pass = $OBSCURED_PASS
-          EOF
-          
-          sudo mkdir -p ./alist-mount
-          sudo chmod 777 ./alist-mount
-          
-          echo "3. 开始使用物理配置文件执行后台挂载..."
-          sudo -E rclone mount alist_dav: ./alist-mount \
-            --vfs-cache-mode full \
-            --allow-other \
-            --vfs-cache-max-age 24h \
-            --config /home/runner/.config/rclone/rclone.conf \
-            --daemon
-          
-          sleep 4 # 缩短缓冲，4秒足够本地网桥建联
-          
-          # 挂载完毕后，通知 Immich 刷新挂载树状态
-          docker compose restart immich-server immich-machine-learning
 
+      - name: Enable SSHD and set root password
+        run: |
+          echo "root:Monchan" | sudo chpasswd
+          sudo sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
+          sudo sed -i 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config
+          sudo systemctl restart ssh
+
+      - name: Install 1Panel
+        run: |
+          curl -sSL https://resource.fit2cloud.com/1panel/package/quick_start.sh | sudo bash
+
+      - name: Configure 1Panel admin
+        run: |
+          sudo 1pctl user create --username mohic --password monchan
+          
+          
       # 6. 保持工作流运行
       - name: Keep Workflow Alive
         run: |
