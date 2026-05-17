@@ -172,8 +172,11 @@ jobs:
           
           if [ -s ./data.zip ]; then
             echo "备份文件下载成功，正在执行覆盖解压..."
+            
+            cd ./prism
             docker compose stop alist
             
+            cd ../
             echo "3. 清理宿主机空挂载目录，并直接解压物理备份到挂载点..."
             sudo rm -rf ./alist-data
             sudo mkdir -p ./alist-data
@@ -193,7 +196,9 @@ jobs:
             echo "错误：加密备份文件下载失败或为空，无法执行恢复！"
             exit 1
           fi
-          #sudo rm -f ./data.zip
+          
+          cd ../
+          sudo rm -f ./data.zip
 
 
       - name: Enable SSHD and set root password
