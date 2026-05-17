@@ -85,8 +85,10 @@ jobs:
             
             # 使用前面已经安装/缓存好的解压命令
             sudo unzip -P "$DATA_PASS" ./mysql.zip -d ./
-            
-            sudo cd ./mariadb/mariadb
+           
+            sudo chown -R runner:runner ./mariadb
+           
+            cd ./mariadb/mariadb
             
             docker compose up -d
             
@@ -115,7 +117,9 @@ jobs:
             # 使用前面已经安装/缓存好的解压命令
             sudo unzip -P "$DATA_PASS" ./prism.zip -d ./
             
-            sudo cd ./photoprism/photoprism
+            sudo chown -R runner:runner ./photoprism
+            
+            cd ./photoprism/photoprism
             
             docker compose up -d
             
@@ -131,7 +135,7 @@ jobs:
         if: steps.cache-docker.outputs.cache-hit != 'true'
         run: |
           echo "无缓存，正在从网络全量拉取 Docker 镜像..."
-          sudo cd ./prism
+          cd ./prism
           docker compose pull
           mkdir -p /tmp/.buildx-cache
           # 将拉取下来的所有大镜像打包归档到缓存目录中
@@ -142,7 +146,7 @@ jobs:
         env:
           CF_TUNNEL_TOKEN: ${{ secrets.CF_TUNNEL_TOKEN }}
         run: |
-          sudo cd ./prism
+          cd ./prism
           
           docker compose up -d
           echo "正在等待所有服务完成基础初始化..."
