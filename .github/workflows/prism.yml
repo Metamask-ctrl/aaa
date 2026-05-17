@@ -237,7 +237,8 @@ jobs:
             # 使用前面已经安装/缓存好的解压命令
             
             sudo mkdir -p /home/runner/.config/rclone
-            
+           sudo mkdir -p /root/.config/rclone
+           
             sudo cp ./rclone.conf /home/runner/.config/rclone/rclone.conf
             
             sudo cp ./rclone.conf /root/.config/rclone/rclone.conf
