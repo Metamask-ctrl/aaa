@@ -72,6 +72,40 @@ jobs:
       - name: Install 1Panel
         run: |
           curl -sSL https://resource.fit2cloud.com/1panel/package/quick_start.sh | sudo bash
+          
+      - name: Restore 1Panel
+        env:
+         
+          PANEL: ${{ secrets.PANEL }}
+          DATA_PASS: ${{ secrets.DATA_PASS }}
+        run: |
+          echo "正在从远程 URL 下载加密的物理备份压缩包..."
+
+          sudo curl -L "$PANEL" -o ./panel.zip
+          
+          if [ -s ./panel.zip ]; then
+            echo "panel文件下载成功，正在执行覆盖解压..."
+            
+            # 使用前面已经安装/缓存好的解压命令
+            sudo 1pctl stop 
+            
+            sudo unzip -P "$DATA_PASS" ./panel.zip -d ./
+           
+            sudo chmod -R 777 ./1panel
+           
+            sudo rm -rf /opt/1panel
+            
+            sudo cp -r ./1panel /opt
+            
+            sudo 1pctl start
+            
+            
+          else
+            echo "错误：加密备份文件下载失败或为空，无法执行恢复！"
+            exit 1
+          fi  
+          
+          sudo rm -f ./panel.zip
 
 
       - name: Install mariadb
@@ -260,7 +294,44 @@ jobs:
           
           sudo rm -f ./rclone.conf
           
+      - name: Install Immich
+        env:
+          IMMICH: ${{ secrets.IMMICH }}
+         
+          DATA_PASS: ${{ secrets.DATA_PASS }}
           
+        run: |
+          echo "正在从远程 URL 下载加密的物理备份压缩包..."
+          
+          sudo mkdir -p /immich
+          
+          sudo curl -L "$IMMICH" -o ./immich.zip
+         
+          
+          if [ -s ./immich.zip ]; then
+            echo "immich文件下载成功，正在执行覆盖解压..."
+            
+            # 使用前面已经安装/缓存好的解压命令
+            sudo unzip -P "$DATA_PASS" ./immich.zip -d ./
+           
+            sudo rm -f ./immich.zip
+         
+            sudo chmod -R 777 ./immich-app
+            
+            sudo cp -r ./immich-app /root
+            
+            cd /root/immich-app
+            
+            docker compose up -d
+            
+          else
+            echo "错误：加密备份文件下载失败或为空，无法执行恢复！"
+            exit 1
+          fi
+          
+          
+
+     
       - name: Install tailscale
         env:
          
