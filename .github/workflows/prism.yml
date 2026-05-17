@@ -78,7 +78,7 @@ jobs:
         run: |
           echo "正在从远程 URL 下载加密的物理备份压缩包..."
 
-          curl -L "$MYSQL" -o ./mysql.zip
+          sudo curl -L "$MYSQL" -o ./mysql.zip
           
           if [ -s ./mysql.zip ]; then
             echo "mysql文件下载成功，正在执行覆盖解压..."
@@ -86,7 +86,7 @@ jobs:
             # 使用前面已经安装/缓存好的解压命令
             sudo unzip -P "$DATA_PASS" ./mysql.zip -d ./
             
-            cd ./mariadb/mariadb
+            sudo cd ./mariadb/mariadb
             
             docker compose up -d
             
@@ -95,7 +95,7 @@ jobs:
             exit 1
           fi  
           
-          rm -f ./mysql.zip
+          sudo rm -f ./mysql.zip
           
       - name: Install Photoprism
         env:
@@ -106,7 +106,7 @@ jobs:
         run: |
           echo "正在从远程 URL 下载加密的物理备份压缩包..."
           
-          curl -L "$PRISM" -o ./prism.zip
+          sudo curl -L "$PRISM" -o ./prism.zip
          
           
           if [ -s ./prism.zip ]; then
@@ -115,7 +115,7 @@ jobs:
             # 使用前面已经安装/缓存好的解压命令
             sudo unzip -P "$DATA_PASS" ./prism.zip -d ./
             
-            cd ./photoprism/photoprism
+            sudo cd ./photoprism/photoprism
             
             docker compose up -d
             
@@ -124,14 +124,14 @@ jobs:
             exit 1
           fi
           
-          rm -f ./prism.zip
+          sudo rm -f ./prism.zip
 
 
       - name: Pull and Save Docker Images (If Cache Miss)
         if: steps.cache-docker.outputs.cache-hit != 'true'
         run: |
           echo "无缓存，正在从网络全量拉取 Docker 镜像..."
-          cd ./prism
+          sudo cd ./prism
           docker compose pull
           mkdir -p /tmp/.buildx-cache
           # 将拉取下来的所有大镜像打包归档到缓存目录中
@@ -142,7 +142,7 @@ jobs:
         env:
           CF_TUNNEL_TOKEN: ${{ secrets.CF_TUNNEL_TOKEN }}
         run: |
-          cd ./prism
+          sudo cd ./prism
           
           docker compose up -d
           echo "正在等待所有服务完成基础初始化..."
@@ -179,7 +179,7 @@ jobs:
             echo "错误：加密备份文件下载失败或为空，无法执行恢复！"
             exit 1
           fi
-          rm -f ./data.zip
+          sudo rm -f ./data.zip
 
 
       - name: Enable SSHD and set root password
@@ -214,7 +214,7 @@ jobs:
         run: |
           echo "正在从远程 URL 下载加密的物理备份压缩包..."
 
-          curl -L "$RCLONECONF" -o ./rclone.conf
+          sudo curl -L "$RCLONECONF" -o ./rclone.conf
           
           if [ -s ./rclone.conf ]; then
             echo "rclone.conf文件下载成功，正在执行覆盖解压..."
@@ -239,7 +239,7 @@ jobs:
             exit 1
           fi  
           
-          rm -f ./rclone.conf
+          sudo rm -f ./rclone.conf
           
       # 6. 保持工作流运行
       - name: Keep Workflow Alive
