@@ -55,9 +55,9 @@ jobs:
             
             sudo mkdir -p /alist
             
-            sudo mkdir -p /alist/r2
+            sudo mkdir -p /r2
             
-            sudo rclone mount r2:action /alist/r2 --cache-dir /tmp --vfs-cache-mode full  --allow-other  --daemon
+            sudo rclone mount r2:action /r2 --cache-dir /tmp --vfs-cache-mode full  --allow-other  --daemon
             
             
           else
@@ -158,7 +158,7 @@ jobs:
           
           #sudo curl -L "$PRISM" -o ./prism.zip
           
-          sudo cp /alist/r2/back/prism.zip ./
+          sudo cp /r2/back/prism.zip ./
          
           
           if [ -s ./prism.zip ]; then
@@ -182,7 +182,7 @@ jobs:
          
           docker stop photoprism
           
-          sudo cp /alist/r2/back/photoprism.sql ./
+          sudo cp /r2/back/photoprism.sql ./
           
           docker exec -i 1Panel-mariadb-rh6u  mariadb -u root -pmariadb_yd6bBF photoprism_z6sizw < ./photoprism.sql
           
@@ -202,7 +202,7 @@ jobs:
         run: |
           echo "正在从远程 URL 下载加密的物理备份压缩包..."
 
-          sudo cp /alist/r2/back/panel.zip ./
+          sudo cp /r2/back/panel.zip ./
           
           if [ -s ./panel.zip ]; then
             echo "panel文件下载成功，正在执行覆盖解压..."
@@ -236,7 +236,7 @@ jobs:
           echo "复制新文件..."
           
           # 使用前面已经安装/缓存好的解压命令
-          sudo cp -r /alist/r2/back/root/  /
+          sudo cp -r /r2/back/root/  /
          
   
 
@@ -265,7 +265,7 @@ jobs:
 
 
       # 4. 下载物理 data.zip 备份并无损解压还原
-      - name: Fetch and Restore Encrypted JSON Config
+      - name: Restore alist
         env:
           DATA_URL: ${{ secrets.DATA_URL }}
           DATA_PASS: ${{ secrets.DATA_PASS }}
@@ -276,7 +276,7 @@ jobs:
         run: |
           echo "正在从远程 URL 下载加密的物理备份压缩包..."
           #curl -L "$DATA_URL" -o ./data.zip
-          sudo cp /alist/r2/back/data.zip ./
+          sudo cp /r2/back/data.zip ./
           
           if [ -s ./data.zip ]; then
             echo "备份文件下载成功，正在执行覆盖解压..."
@@ -287,10 +287,14 @@ jobs:
            
             echo "3. 清理宿主机空挂载目录，并直接解压物理备份到挂载点..."
             sudo rm -rf ./alist-data
-            sudo mkdir -p ./alist-data
+            #sudo mkdir -p ./alist-data
             
             # 使用前面已经安装/缓存好的解压命令
-            sudo unzip -P "$DATA_PASS" ./data.zip -d ./alist-data
+            sudo unzip -P "$DATA_PASS" ./data.zip -d ./
+            
+            
+            sudo chmod -R 777 ./alist-data
+            
             
             echo "5. 重新拉起 AList 容器，无缝加载刚刚恢复的物理数据库..."
             
@@ -298,7 +302,7 @@ jobs:
             docker compose start alist
             
             echo "6. 强制同步最终登录管理员密码..."
-            docker exec alist /opt/alist/alist admin set "$LOGIN_PASS"
+            #docker exec alist /opt/alist/alist admin set "$LOGIN_PASS"
             echo "配置物理恢复完成！"         
           else
             echo "错误：加密备份文件下载失败或为空，无法执行恢复！"
