@@ -378,9 +378,6 @@ jobs:
   
           
       - name: Install Immich
-        env:
-
-          DATA_PASS: ${{ secrets.DATA_PASS }}
           
         run: |
           echo "正在从远程 URL 下载加密的物理备份压缩包..."
@@ -434,15 +431,15 @@ jobs:
 
 
       # 6. 保持工作流运行
-      - name: Restore Immich sql
-        run: |
+      #- name: Restore Immich sql
+        #run: |
         
 
-          echo "恢复immich..."
+          #echo "恢复immich..."
           
-          sudo gunzip -c $(ls -t /alist/immich/backups/*.sql.gz | head -n 1) | docker exec -i immich_postgres psql -U postgres -d immich
+          #sudo gunzip -c $(ls -t /alist/immich/backups/*.sql.gz | head -n 1) | docker exec -i immich_postgres psql -U postgres -d immich
             
-          docker restart immich_server
+          #docker restart immich_server
                    
           
       # 6. 保持工作流运行
