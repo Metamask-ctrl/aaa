@@ -180,15 +180,15 @@ jobs:
           
           echo  "Restore Photoprism sql..."
          
-          docker stop photoprism
+          #docker stop photoprism
           
-          sudo cp /r2/back/photoprism.sql ./
+          #sudo cp /r2/back/photoprism.sql ./
           
-          docker exec -i 1Panel-mariadb-rh6u  mariadb -u root -pmariadb_yd6bBF photoprism_z6sizw < ./photoprism.sql
+          #docker exec -i 1Panel-mariadb-rh6u  mariadb -u root -pmariadb_yd6bBF photoprism_z6sizw < ./photoprism.sql
           
-          docker start photoprism
+          #docker start photoprism
           
-          sudo rm -f ./photoprism.sql
+          #sudo rm -f ./photoprism.sql
           
           sudo rm -f ./prism.zip
 
