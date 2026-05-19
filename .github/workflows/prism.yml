@@ -2,7 +2,7 @@ name: Run AList and Tunnel Photoprism555
 
 on:
   schedule:
-    - cron: "0 16 * * *"
+    - cron: "5 16 * * *"
   workflow_dispatch: # 支持手动点击触发
 
 jobs:
