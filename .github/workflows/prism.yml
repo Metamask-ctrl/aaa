@@ -57,18 +57,24 @@ jobs:
           fi
           
           
-
       - name: Pull and Save Docker Images (If Cache Miss)
         if: steps.cache-docker.outputs.cache-hit != 'true'
         run: |
           echo "无缓存，正在从网络全量拉取 Docker 镜像..."
-          
-          docker compose -f ./docker-compose1.yml pull
-          mkdir -p /tmp/.buildx-cache
-          # 将拉取下来的所有大镜像打包归档到缓存目录中
-          docker save $(docker compose config | grep 'image:' | awk '{print $2}' | sort | uniq) -o /tmp/.buildx-cache/images.tar
 
-          
+          # 1. 使用指定 compose 文件
+          docker compose -f ./docker-compose1.yml pull
+
+          mkdir -p /tmp/.buildx-cache
+
+          # 2. 从指定 compose 文件中提取镜像列表（不会误读其他 compose）
+          IMAGES=$(docker compose -f ./docker-compose1.yml config | awk '/image:/ {print $2}' | sort | uniq)
+
+          echo "将以下镜像保存到缓存："
+          echo "$IMAGES"
+
+          # 3. 使用 xargs 避免参数过长问题
+          echo "$IMAGES" | xargs docker save -o /tmp/.buildx-cache/images.tar          
           
 
       - name: Mount s3
