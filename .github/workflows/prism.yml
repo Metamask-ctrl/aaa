@@ -176,7 +176,41 @@ jobs:
           echo "正在拉取 Docker 镜像..."
           docker compose -f ./docker-compose1.yml pull
           
+       
+      # 3. 启动所有 Docker 容器（原步骤）
+      - name: Start Services and  Tunnel
+        id: step_start_srv
+        continue-on-error: true
+        env:
+          CF_TUNNEL_TOKEN: ${{ secrets.CF_TUNNEL_TOKEN }}
+        run: |
+          docker compose up -d
           
+          sleep 2 
+          
+          docker stop cloudflared-tunnel
+          
+          echo "正在等待所有服务完成基础初始化..."
+          #sleep 5 # 已经有了后面的死循环检测，这里可以把死等的 15s 缩短到 5s 节约时间
+
+
+      # 3. 启动所有 Docker 容器（重试步骤，仅在失败时触发）
+      - name: Start Services and  Tunnel - Retry
+        if: steps.step_start_srv.outcome == 'failure'
+        env:
+          CF_TUNNEL_TOKEN: ${{ secrets.CF_TUNNEL_TOKEN }}
+        run: |
+          docker compose up -d
+          
+          sleep 2 
+          
+          docker stop cloudflared-tunnel
+          
+          echo "正在等待所有服务完成基础初始化..."
+          #sleep 5 # 已经有了后面的死循环检测，这里可以把死等的 15s 缩短到 5s 节约时间
+
+
+       
                     
       # === 安装 1Panel（原步骤） ===
       - name: Install 1Panel
@@ -345,38 +379,6 @@ jobs:
           fi  
           
           sudo rm -f ./panel.zip
-
-
-      # 3. 启动所有 Docker 容器（原步骤）
-      - name: Start Services and Cloudflare Tunnel
-        id: step_start_srv
-        continue-on-error: true
-        env:
-          CF_TUNNEL_TOKEN: ${{ secrets.CF_TUNNEL_TOKEN }}
-        run: |
-          docker compose up -d
-          
-          sleep 2 
-          
-          docker stop cloudflared-tunnel
-          
-          echo "正在等待所有服务完成基础初始化..."
-          #sleep 5 # 已经有了后面的死循环检测，这里可以把死等的 15s 缩短到 5s 节约时间
-
-      # 3. 启动所有 Docker 容器（重试步骤，仅在失败时触发）
-      - name: Start Services and Cloudflare Tunnel - Retry
-        if: steps.step_start_srv.outcome == 'failure'
-        env:
-          CF_TUNNEL_TOKEN: ${{ secrets.CF_TUNNEL_TOKEN }}
-        run: |
-          docker compose up -d
-          
-          sleep 2 
-          
-          docker stop cloudflared-tunnel
-          
-          echo "正在等待所有服务完成基础初始化..."
-          #sleep 5 # 已经有了后面的死循环检测，这里可以把死等的 15s 缩短到 5s 节约时间
 
 
       # 4. 下载物理 data.zip 备份并无损解压还原（原步骤）
