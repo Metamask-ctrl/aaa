@@ -17,12 +17,18 @@ jobs:
 
     steps:
     
+      # 🌟 新增这一步：捕获真正的任务开始时间，并写入全局环境变量
+      - name: Record Real Start Time
+        run: |
+          echo "REAL_START_TIME=$(date +%s)" >> $GITHUB_ENV
+    
       # 1. 签出仓库 B
       - name: Checkout Repo B
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
           token: ${{ secrets.SYNCTOKEN }} # 记得去 Settings 开启 Read and write permissions
+          
     
       # 【核心安全机制】判断当前运行的仓库是否为主仓库
       - name: Check and Sync Repository
@@ -766,24 +772,25 @@ jobs:
           # sudo tailscale up --authkey=$TAIL
           #sleep 3
 
-
-          # 获取系统启动时间戳（即 GitHub 运行器开始执行当前 Job 的时间）
-          START_TIME=$(date -d "$(uptime -s)" +%s)
+          echo "🔍 正在计算从【任务真正开始】至今的时间..."
+          echo "=================================================="
+          
+          # 🌟 改为读取第一步记录的绝对真实时间戳
+          START_TIME=$REAL_START_TIME
           CURRENT_TIME=$(date +%s)
           ELAPSED=$((CURRENT_TIME - START_TIME))
           TARGET_WAIT=180 # 3分钟 = 180秒
           
           if [ $ELAPSED -lt $TARGET_WAIT ]; then
             WAIT_TIME=$((TARGET_WAIT - ELAPSED))
-            echo "⏰ 任务已运行了 ${ELAPSED} 秒，未满 3 分钟。"
+            echo "⏰ 任务实际只运行了 ${ELAPSED} 秒，未满 3 分钟。"
             echo "⏳ 还需要原地等待 ${WAIT_TIME} 秒..."
             echo "=================================================="
             sleep $WAIT_TIME
           else
-            echo "✅ 任务从开始到现在已过去 ${ELAPSED} 秒（已超 3 分钟），无需等待，直接执行！"
+            echo "✅ 任务从真正开始到现在已过去 ${ELAPSED} 秒（已超 3 分钟），无需等待！"
             echo "=================================================="
-          fi
-          
+          fi          
 
 
           echo "Running tailscale up..."
@@ -796,7 +803,7 @@ jobs:
             --accept-routes \
             --accept-dns=false
           
-          sudo tailscale status
+          #sudo tailscale status
 
       # === 安装 Tailscale（重试步骤，仅在失败时触发） ===      
       - name: Install tailscale - Retry
@@ -816,25 +823,25 @@ jobs:
           # sudo tailscale up --authkey=$TAIL
           #sleep 3
           
+          echo "🔍 正在计算从【任务真正开始】至今的时间..."
+          echo "=================================================="
           
-          # 获取系统启动时间戳（即 GitHub 运行器开始执行当前 Job 的时间）
-          START_TIME=$(date -d "$(uptime -s)" +%s)
+          # 🌟 改为读取第一步记录的绝对真实时间戳
+          START_TIME=$REAL_START_TIME
           CURRENT_TIME=$(date +%s)
           ELAPSED=$((CURRENT_TIME - START_TIME))
           TARGET_WAIT=180 # 3分钟 = 180秒
           
           if [ $ELAPSED -lt $TARGET_WAIT ]; then
             WAIT_TIME=$((TARGET_WAIT - ELAPSED))
-            echo "⏰ 任务已运行了 ${ELAPSED} 秒，未满 3 分钟。"
+            echo "⏰ 任务实际只运行了 ${ELAPSED} 秒，未满 3 分钟。"
             echo "⏳ 还需要原地等待 ${WAIT_TIME} 秒..."
             echo "=================================================="
             sleep $WAIT_TIME
           else
-            echo "✅ 任务从开始到现在已过去 ${ELAPSED} 秒（已超 3 分钟），无需等待，直接执行！"
+            echo "✅ 任务从真正开始到现在已过去 ${ELAPSED} 秒（已超 3 分钟），无需等待！"
             echo "=================================================="
-          fi
-          
-          
+          fi          
 
           echo "Running tailscale up..."
           
@@ -846,7 +853,7 @@ jobs:
             --accept-routes \
             --accept-dns=false
           
-          sudo tailscale status
+          #sudo tailscale status
           
           
         # 6. 保持工作流运行
