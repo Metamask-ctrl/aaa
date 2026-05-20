@@ -1,4 +1,4 @@
-name: Run AList and Tunnel Photoprism555
+name: Run prism555
 
 on:
   #schedule:
