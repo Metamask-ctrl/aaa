@@ -3,11 +3,16 @@ name: Run prism555
 permissions:
   actions: write 
 env:
-  TOKEN: ${{ secrets.SYNCTOKEN }} 
+  SYNCTOKEN: ${{ secrets.SYNCTOKEN }} 
+  
+  TOKEN: ${{ secrets.TOKEN }} 
+  
   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  
   DATA_PASS: ${{ secrets.DATA_PASS }}      
           
   GH_URL: ${{ secrets.GH_URL }} 
+  
   EPASS: ${{ secrets.EPASS }} 
           
 on:
@@ -910,13 +915,6 @@ jobs:
       # 2. 核心：只有当工作流被 Cancel 时，才会触发这个步骤
       - name: Auto Backup
         if: steps.Keep_start.outcome == 'success'
-        env:
-          TOKEN: ${{ secrets.SYNCTOKEN }} 
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          DATA_PASS: ${{ secrets.DATA_PASS }}      
-          
-          GH_URL: ${{ secrets.GH_URL }}  
-          EPASS: ${{ secrets.EPASS }} 
         
         run: |
           # 通过 -w 获取 HTTP 状态码，并用 -s 隐藏进度条
