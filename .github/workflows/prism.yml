@@ -508,187 +508,61 @@ jobs:
             sudo rclone mount mohic:/ /alist --cache-dir /tmp --vfs-cache-mode full  --allow-other  --daemon
             
           
-      # === 安装 MariaDB（原步骤） ===
-      - name: Install mariadb
-        id: step_mariadb
-        continue-on-error: true
-        #env:
-          #MYSQL: ${{ secrets.MYSQL }}
-          #DATA_PASS: ${{ secrets.DATA_PASS }}
-          #LOGIN_PASS: ${{ secrets.PASS }}
-        run: |
-          echo "正在从远程 URL 下载加密的物理备份压缩包..."
           
-          #sudo curl -L "$PRISM" -o ./prism.zip
-          
-          cd /opt/1panel/apps/mariadb/mariadb1
-          
-          if [ -s ./docker-compose.yml ]; then
-            echo "prism文件下载成功，正在执行覆盖解压..."
-            
-            docker compose up -d
-            
-          else
-            echo "错误：加密备份文件下载失败或为空，无法执行恢复！"
-            
-          fi
- 
-      # === 安装 MariaDB（重试步骤，仅在失败时触发） ===
-      - name: Install mariadb - Retry
-        if: steps.step_mariadb.outcome == 'failure'
-        #env:
-          #MYSQL: ${{ secrets.MYSQL }}
-          #DATA_PASS: ${{ secrets.DATA_PASS }}
-          #LOGIN_PASS: ${{ secrets.PASS }}
-        run: |
-          echo "正在从远程 URL 下载加密的物理备份压缩包..."
-          
-          #sudo curl -L "$PRISM" -o ./prism.zip
-          
-          cd /opt/1panel/apps/mariadb/mariadb1
-          
-          if [ -s ./docker-compose.yml ]; then
-            echo "prism文件下载成功，正在执行覆盖解压..."
-            
-            docker compose up -d
-            
-          else
-            echo "错误：加密备份文件下载失败或为空，无法执行恢复！"
-            
-          fi
 
-
-      # === 安装 Photoprism（原步骤） ===
-      - name: Install Photoprism
-        id: step_photoprism
+      # ==========================================
+      # 10-13. 批量自动恢复并启动 1Panel 所有应用（精准一级目录版）
+      # ==========================================
+      - name: Auto Discover and Install 1Panel Apps
+        id: step_auto_apps
         continue-on-error: true
         run: |
-          echo "正在从远程 URL 下载加密的物理备份压缩包..."
+          echo "=================================================="
+          echo "🔍 开始扫描 1Panel 一级应用目录..."
+          echo "=================================================="
           
-          #sudo curl -L "$PRISM" -o ./prism.zip
-          
-          cd /opt/1panel/apps/photoprism/photoprism
-          
-          #sudo mv .env.txt .env
-          
-          if [ -s ./docker-compose.yml ]; then
-            echo "prism文件下载成功，正在执行覆盖解压..."
-            
-            docker compose up -d
-            
-          else
-            echo "错误：加密备份文件下载失败或为空，无法执行恢复！"
-            
-          fi
-          
-          echo  "Restore Photoprism sql..."
-         
-          #docker stop photoprism
-          #sudo cp /r2/back/photoprism.sql ./
-          #docker exec -i 1Panel-mariadb-rh6u  mariadb -u root -pmariadb_yd6bBF photoprism_z6sizw < ./photoprism.sql
-          #docker start photoprism
-          #sudo rm -f ./photoprism.sql
-          #sudo rm -f ./prism.zip
-
-      # === 安装 Photoprism（重试步骤，仅在失败时触发） ===
-      - name: Install Photoprism - Retry
-        if: steps.step_photoprism.outcome == 'failure'
-        run: |
-          echo "正在从远程 URL 下载加密的物理备份压缩包..."
-          
-          #sudo curl -L "$PRISM" -o ./prism.zip
-          
-          cd /opt/1panel/apps/photoprism/photoprism
-          
-          #sudo mv .env.txt .env
-          
-          if [ -s ./docker-compose.yml ]; then
-            echo "prism文件下载成功，正在执行覆盖解压..."
-            
-            docker compose up -d
-            
-          else
-            echo "错误：加密备份文件下载失败或为空，无法执行恢复！"
-            
-          fi
-          
-          echo  "Restore Photoprism sql..."
-          
- 
-      # === 安装 meilisearch（原步骤） ===
-      - name: Install meilisearch
-        id: step_meili
-        continue-on-error: true
-        run: |
-          echo "正在从远程 URL 下载加密的物理备份压缩包..."
-        
-          cd /opt/1panel/apps/meilisearch/meilisearch
-          
-          if [ -s ./docker-compose.yml ]; then
-            echo "prism文件下载成功，正在执行覆盖解压..."
-            
-            docker compose up -d
-            
-          else
-            echo "错误：加密备份文件下载失败或为空，无法执行恢复！"
-            
+          # 检查 1Panel 应用根目录是否存在
+          if [ ! -d "/opt/1panel/apps" ]; then
+            echo "⚠️ 未找到 /opt/1panel/apps 目录，跳过自动扫描。"
+            exit 0
           fi
 
-      # === 安装 meilisearch（重试步骤，仅在失败时触发） ===
-      - name: Install meilisearch - Retry
-        if: steps.step_meili.outcome == 'failure'
-        run: |
-          echo "正在从远程 URL 下载加密的物理备份压缩包..."
-        
-          cd /opt/1panel/apps/meilisearch/meilisearch
-          
-          if [ -s ./docker-compose.yml ]; then
-            echo "prism文件下载成功，正在执行覆盖解压..."
-            
-            docker compose up -d
-            
-          else
-            echo "错误：加密备份文件下载失败或为空，无法执行恢复！"
-            
-          fi
- 
- 
-      # === 安装 rustdesk（原步骤） ===
-      - name: Install rustdesk
-        id: step_rustdesk
-        continue-on-error: true
-        run: |
-          echo "正在从远程 URL 下载加密的物理备份压缩包..."
-        
-          cd /opt/1panel/apps/rustdesk/rustdesk
-          
-          if [ -s ./docker-compose.yml ]; then
-            echo "prism文件下载成功，正在执行覆盖解压..."
-            
-            docker compose up -d
-            
-          else
-            echo "错误：加密备份文件下载失败或为空，无法执行恢复！"
-            
-          fi
+          # 遍历下一级应用目录（例如 /opt/1panel/apps/mariadb）
+          for app_dir in /opt/1panel/apps/*; do
+            # 确保它是一个目录，并且旗下直接存在 docker-compose.yml
+            if [ -d "$app_dir" ] && [ -f "$app_dir/docker-compose.yml" ]; then
+              app_name=$(basename "$app_dir")
+              
+              echo "=================================================="
+              echo "🚀 发现应用: [$app_name]，正在进入目录: $app_dir"
+              echo "正在从远程 URL 下载加密的物理备份压缩包..." # 保留你原本的提示词
+              echo "文件验证成功，正在拉起 Docker 容器..."
+              echo "=================================================="
+              
+              # 进入该一级目录并启动容器
+              cd "$app_dir"
+              docker compose up -d
+            fi
+          done
+          echo "🎉 所有检测到的 1Panel 应用已尝试启动完成！"
 
-      # === 安装 rustdesk（重试步骤，仅在失败时触发） ===
-      - name: Install rustdesk - Retry
-        if: steps.step_rustdesk.outcome == 'failure'
+      # === 批量自动启动（重试步骤，仅在失败时触发） ===
+      - name: Auto Discover and Install 1Panel Apps - Retry
+        if: steps.step_auto_apps.outcome == 'failure'
         run: |
-          echo "正在从远程 URL 下载加密的物理备份压缩包..."
-        
-          cd /opt/1panel/apps/rustdesk/rustdesk
+          echo "=================================================="
+          echo "⚠️ 正在执行 1Panel 应用批量启动重试..."
+          echo "=================================================="
           
-          if [ -s ./docker-compose.yml ]; then
-            echo "prism文件下载成功，正在执行覆盖解压..."
-            
-            docker compose up -d
-            
-          else
-            echo "错误：加密备份文件下载失败或为空，无法执行恢复！"
-            
-          fi
+          for app_dir in /opt/1panel/apps/*; do
+            if [ -d "$app_dir" ] && [ -f "$app_dir/docker-compose.yml" ]; then
+              echo "🔄 [重试] 正在拉起目录下的容器: $app_dir"
+              cd "$app_dir"
+              docker compose up -d
+            fi
+          done
+
+
  
  
       # === 恢复文件（原步骤） ===      
@@ -722,43 +596,6 @@ jobs:
           #echo "20333" | sudo 1pctl update port
           
   
-      # === 安装 Immich（原步骤） ===   
-      - name: Install Immich
-        id: step_immich
-        continue-on-error: true
-        run: |
-          echo "正在从远程 URL 下载加密的物理备份压缩包..."
- 
-          cd /opt/1panel/apps/immich-app 
-          
-          if [ -s ./docker-compose.yml ]; then
-            echo "Immich文件下载成功，正在执行覆盖解压..."
-            
-            docker compose up -d
-            
-          else
-            echo "错误：加密备份文件下载失败或为空，无法执行恢复！"
-            
-          fi
-
-      # === 安装 Immich（重试步骤，仅在失败时触发） ===   
-      - name: Install Immich - Retry
-        if: steps.step_immich.outcome == 'failure'
-        run: |
-          echo "正在从远程 URL 下载加密的物理备份压缩包..."
- 
-          cd /opt/1panel/apps/immich-app 
-          
-          if [ -s ./docker-compose.yml ]; then
-            echo "Immich文件下载成功，正在执行覆盖解压..."
-            
-            docker compose up -d
-            
-          else
-            echo "错误：加密备份文件下载失败或为空，无法执行恢复！"
-            
-          fi
-
     
     
       # === 安装 Tailscale（原步骤） ===      
