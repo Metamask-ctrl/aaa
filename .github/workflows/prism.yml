@@ -1058,3 +1058,5 @@ jobs:
           
           sudo bash /opt/1panel/a.sh $(cat /r2/back/ul.txt) $EPASS $(cat /r2/back/to.txt) "工作流被取消，紧急备份时间: $BACKUP_TIME，${{ github.repository }}"
           
+          sudo python3 /opt/1panel/task/stop.py
+          
