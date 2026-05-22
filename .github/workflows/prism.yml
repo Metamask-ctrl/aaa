@@ -642,7 +642,10 @@ jobs:
               
               # 进入该一级目录并启动容器
               cd "$app_dir"
+              
               docker compose up -d
+              
+              
             fi
           done
           echo "🎉 所有检测到的 1Panel 应用已尝试启动完成！"
@@ -660,22 +663,37 @@ jobs:
           for app_dir in /opt/1panel/apps/*; do
             if [ -d "$app_dir" ] && [ -f "$app_dir/docker-compose.yml" ]; then
               echo "🔄 [重试] 正在拉起目录下的容器: $app_dir"
+              
               cd "$app_dir"
-              docker compose up -d
+              
+              echo $(docker compose up -d) > log.txt
+              
+              if grep -qiE "Running" log.txt; then
+              
+                if grep -qiE "Error|failed" log.txt; then
+                
+                    echo "❌$app_dir 启动失败" 
+                
+                    sudo bash /opt/1panel/a.sh $(cat /r2/back/ul.txt) $EPASS $(cat /r2/back/to.txt) "$(echo "❌【应用】$app_dir 启动失败！请检查 YML 配置。${{ github.repository }}")"
+
+                else
+                
+                    echo "✅$app_dir 启动成功" 
+                
+                fi
+              
+              else 
+              
+                echo "❌$app_dir 启动失败" 
+                
+                sudo bash /opt/1panel/a.sh $(cat /r2/back/ul.txt) $EPASS $(cat /r2/back/to.txt) "$(echo "❌【应用】$app_dir 启动失败！请检查 YML 配置。${{ github.repository }}")"
+
+
+              fi
+              
             fi
           done
-
-      # === 批量自动启动（重试步骤，仅在失败时触发） ===
-      - name: Send notification - Retry
-        if: steps.step_auto_apps_retry.outcome == 'failure'
-        continue-on-error: true
-        run: |
-          echo "=================================================="
-          echo "⚠️ 正在执行 1Panel 应用批量启动重试..."
-          echo "=================================================="
           
-          sudo bash /opt/1panel/a.sh $(cat /r2/back/ul.txt) $EPASS $(cat /r2/back/to.txt) "$(echo "❌【Apps】应用启动失败！请检查 YML 配置。${{ github.repository }}")"
-
  
  
       # === 恢复文件（原步骤） ===      
@@ -870,9 +888,9 @@ jobs:
           
           #echo "工作流启动时间 (UTC): $(date -u -d @$START_TIME '+%Y-%m-%d %H:%M:%S')"
           
-          echo "工作流启动时间 (UTC): $(TZ='Asia/Shanghai' date -d @$START_TIME '+%Y-%m-%d %H:%M:%S')“
+          echo "工作流启动时间 (UTC): $(TZ='Asia/Shanghai' date -d @$START_TIME '+%Y-%m-%d %H:%M:%S')"
           
-          echo "预计结束时间 (UTC): $(TZ='Asia/Shanghai' date -d @$END_TIME '+%Y-%m-%d %H:%M:%S')“
+          echo "预计结束时间 (UTC): $(TZ='Asia/Shanghai' date -d @$END_TIME '+%Y-%m-%d %H:%M:%S')"
              
           
           sudo bash /opt/1panel/a.sh $(cat /r2/back/ul.txt) $EPASS $(cat /r2/back/to.txt) "$(echo "预计结束时间 (UTC): $(TZ='Asia/Shanghai' date -d @$END_TIME '+%Y-%m-%d %H:%M:%S')，${{ github.repository }}")"
