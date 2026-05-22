@@ -666,7 +666,7 @@ jobs:
               
               cd "$app_dir"
               
-              docker compose up -d | sudo tee log.txt > /dev/null
+              docker compose up -d > log.txt 2>&1
               
               if grep -qiE "Running" log.txt; then
               
